@@ -3,11 +3,13 @@ import pprint
 import re
 import codecs
 import json
+import audit
 
 lower = re.compile(r'^([a-z]|_)*$')
 lower_colon = re.compile(r'^([a-z]|_)*:([a-z]|_)*$')
 problemchars = re.compile(r'[=\+/&<>;\'"\?%#$@\,\. \t\r\n]')
 is_address = re.compile(r'addr:')
+is_street = re.compile(r'addr:street')
 second_colon = re.compile(r'^addr:\w+:\w+$')
 
 def shape_element(element):
@@ -42,8 +44,11 @@ def shape_element(element):
                continue
             else:
                if is_address.search(k) and not second_colon.search(k):
-                    prop = k.split(":")[-1]
-                    address.update({prop: t.get("v")})
+                    if is_street.search(k):
+                        address.update({"street": audit.update_name(t.get("v"))})
+                    else:
+                        prop = k.split(":")[-1]
+                        address.update({prop: t.get("v")})
                else:
                    node[k] = t.get("v")
 
@@ -76,4 +81,4 @@ def main(filename):
     return data
 
 if __name__ == "__main__":
-    main('sample_toronto.osm')
+    main('toronto_canada.osm')
